@@ -13,11 +13,11 @@ on:
       package_version:
         description: '这里是包版本'
         required: false
-        default: 'packages-24.10'  
+        default: 'packages-24.10'
 
 jobs:
   build:
-    runs-on: ubuntu-22.04 
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout repository
@@ -27,23 +27,23 @@ jobs:
         run: |
           git clone https://github.com/megastep/makeself.git
 
-      - name: Create directories for x86_64 and a53 and set PACKAGE_VERSION
+      - name: Create directories for x86_64 and aarch64_generic and set PACKAGE_VERSION
         run: |
-          mkdir -p x86_64/depends a53/depends
+          mkdir -p x86_64/depends aarch64_generic/depends
           package_version="${{ github.event.inputs.package_version }}"
           if [ -z "$package_version" ]; then
             package_version="packages-24.10"
           fi
           echo "PACKAGE_VERSION=$package_version" >> $GITHUB_ENV
-         
 
-      - name: Download ipk files for x86_64 and a53
+
+      - name: Download ipk files for x86_64 and aarch64_generic
         run: |
           echo "Get PACKAGE_VERSION=$PACKAGE_VERSION"
-          
+
           FILE_PREFIXES=("luci-app-passwall2" "geoview" "hysteria" "naiveproxy" "shadowsocks-rust-sslocal" "shadowsocks-rust-ssserver" "shadowsocksr-libev-ssr-local" "shadowsocksr-libev-ssr-redir" "shadowsocksr-libev-ssr-server" "simple-obfs" "sing-box" "tcping" "tuic-client" "v2ray-geoip" "v2ray-geosite" "v2ray-plugin" "xray-core")
           EXCLUDE_PREFIXES=("luci-app-naiveproxy" "simple-obfs-client" "simple-obfs-server")
-          
+
           BASE_URL_X86="https://dl.openwrt.ai/$PACKAGE_VERSION/x86_64/kiddin9/"
           echo "Fetching x86 directory page from $BASE_URL_X86"
           wget -qO- "$BASE_URL_X86" | \
@@ -73,9 +73,9 @@ jobs:
               done
           done
 
-          BASE_URL_A53="https://dl.openwrt.ai/$PACKAGE_VERSION/aarch64_cortex-a53/kiddin9/"
-          echo "Fetching a53 directory page from $BASE_URL_A53"
-          wget -qO- "$BASE_URL_A53" | \
+          BASE_URL_aarch64_generic="https://dl.openwrt.ai/$PACKAGE_VERSION/aarch64_generic/kiddin9/"
+          echo "Fetching aarch64_generic directory page from $BASE_URL_aarch64_generic"
+          wget -qO- "$BASE_URL_aarch64_generic" | \
           while IFS= read -r LINE; do
               for PREFIX in "${FILE_PREFIXES[@]}"; do
                   if [[ "$LINE" == *"$PREFIX"* ]]; then
@@ -95,19 +95,19 @@ jobs:
                           echo "Skip file: $FILE"
                           continue
                       fi
-                      FILE_URL="${BASE_URL_A53}${FILE}"
+                      FILE_URL="${BASE_URL_aarch64_generic}${FILE}"
                       echo "Found file: $FILE_URL"
-                      curl -L --fail "$FILE_URL" -o "a53/depends/$(basename $FILE_URL)" -#
+                      curl -L --fail "$FILE_URL" -o "aarch64_generic/depends/$(basename $FILE_URL)" -#
                   fi
               done
           done
 
-      - name: download sing-box for a53 form aarch64_generic dir
+      - name: download sing-box for aarch64_generic form aarch64_generic dir
         run: |
           SINGBOX_PREFIXES=("sing-box")
-          BASE_URL_A53="https://dl.openwrt.ai/packages-24.10/aarch64_generic/kiddin9/"
-          echo "for sing-box Fetching a53 directory page from $BASE_URL_A53"
-          wget -qO- "$BASE_URL_A53" | \
+          BASE_URL_aarch64_generic="https://dl.openwrt.ai/packages-24.10/aarch64_generic/kiddin9/"
+          echo "for sing-box Fetching aarch64_generic directory page from $BASE_URL_aarch64_generic"
+          wget -qO- "$BASE_URL_aarch64_generic" | \
           while IFS= read -r LINE; do
               for PREFIX in "${SINGBOX_PREFIXES[@]}"; do
                   if [[ "$LINE" == *"$PREFIX"* ]]; then
@@ -116,22 +116,22 @@ jobs:
                           # echo "No file found in line, skipping"
                           continue
                       fi
-                      FILE_URL="${BASE_URL_A53}${FILE}"
+                      FILE_URL="${BASE_URL_aarch64_generic}${FILE}"
                       echo "Found file: $FILE_URL"
-                      curl -L --fail "$FILE_URL" -o "a53/depends/$(basename $FILE_URL)" -#
+                      curl -L --fail "$FILE_URL" -o "aarch64_generic/depends/$(basename $FILE_URL)" -#
                   fi
               done
           done
-        
+
       - name: mv pw2 to main dir
         run: |
           mv x86_64/depends/luci-app-passwall2*.ipk x86_64
-          mv a53/depends/luci-app-passwall2*.ipk a53
+          mv aarch64_generic/depends/luci-app-passwall2*.ipk aarch64_generic
           echo "List main dir ipk files for x86"
           ls x86_64
-          echo "List main dir ipk files for a53"
-          ls a53
-      
+          echo "List main dir ipk files for aarch64_generic"
+          ls aarch64_generic
+
       - name: downloads libopenssl3 & libudns ipk
         run: |
           echo "downloading libopenssl3 ipk"
@@ -152,8 +152,8 @@ jobs:
                   fi
             done
           done
-          BASE_URL_A53="https://dl.openwrt.ai/$PACKAGE_VERSION/aarch64_cortex-a53/base/"
-          wget -qO- "$BASE_URL_A53" | \
+          BASE_URL_aarch64_generic="https://dl.openwrt.ai/$PACKAGE_VERSION/aarch64_generic/base/"
+          wget -qO- "$BASE_URL_aarch64_generic" | \
           while IFS= read -r LINE; do
               for PREFIX in "${FILE_PREFIXES[@]}"; do
                   if [[ "$LINE" == *"$PREFIX"* ]]; then
@@ -162,9 +162,9 @@ jobs:
                           # echo "No file found in line, skipping"
                           continue
                       fi
-                      FILE_URL="${BASE_URL_A53}${FILE}"
+                      FILE_URL="${BASE_URL_aarch64_generic}${FILE}"
                       echo "Found file: $FILE_URL"
-                      curl -L --fail "$FILE_URL" -o "a53/depends/$(basename $FILE_URL)" -#
+                      curl -L --fail "$FILE_URL" -o "aarch64_generic/depends/$(basename $FILE_URL)" -#
                     fi
               done
           done
@@ -185,8 +185,8 @@ jobs:
                 fi
             done
           done
-          BASE_URL_A53="https://dl.openwrt.ai/$PACKAGE_VERSION/aarch64_cortex-a53/packages/"
-          wget -qO- "$BASE_URL_A53" | \
+          BASE_URL_aarch64_generic="https://dl.openwrt.ai/$PACKAGE_VERSION/aarch64_generic/packages/"
+          wget -qO- "$BASE_URL_aarch64_generic" | \
           while IFS= read -r LINE; do
             for PREFIX in "${FILE_PREFIXES[@]}"; do
                 if [[ "$LINE" == *"$PREFIX"* ]]; then
@@ -195,32 +195,32 @@ jobs:
                         # echo "No file found in line, skipping"
                         continue
                     fi
-                    FILE_URL="${BASE_URL_A53}${FILE}"
+                    FILE_URL="${BASE_URL_aarch64_generic}${FILE}"
                     echo "Found file: $FILE_URL"
-                    curl -L --fail "$FILE_URL" -o "a53/depends/$(basename $FILE_URL)" -#
+                    curl -L --fail "$FILE_URL" -o "aarch64_generic/depends/$(basename $FILE_URL)" -#
                 fi
             done
           done
-          
+
 
       - name: List depends ipks
         run: |
           echo "List x86 depends ipk files"
           ls -lh x86_64/depends/
-          echo "List a53 depends ipk files"
-          ls -lh a53/depends/
-          
-      
-      - name: Create install.sh 
+          echo "List aarch64_generic depends ipk files"
+          ls -lh aarch64_generic/depends/
+
+
+      - name: Create install.sh
         run: |
             echo -e "#!/bin/sh\n\nopkg update\nif [ \$? -ne 0 ]; then\n    echo \"update failed\"\n    exit 1\nfi\nopkg install depends/*.ipk --force-depends\nopkg install *.ipk --force-depends" > x86_64/install.sh
             chmod +x x86_64/install.sh
-            cp x86_64/install.sh a53/
-  
+            cp x86_64/install.sh aarch64_generic/
+
       - name: Create self-extracting archives
         run: |
             mv -f x86_64 makeself
-            mv -f a53 makeself
+            mv -f aarch64_generic makeself
             cd makeself
             ipk_file=$(ls x86_64/*.ipk)
             appversion=$(basename "$ipk_file" | grep -oP '\d+\.\d+\.\d+')
@@ -228,10 +228,10 @@ jobs:
             release_name=$(TZ="Asia/Shanghai" date +'%Y-%m-%d %H:%M Build')
             echo "RELEASE_NAME=$release_name" >> $GITHUB_ENV
             ./makeself.sh x86_64/ passwall2_x86_64_$appversion.run "by github action" ./install.sh
-            ./makeself.sh a53/ passwall2_aarch64_cortex-a53_$appversion.run "by github action" ./install.sh
-            
-            
-      
+            ./makeself.sh aarch64_generic/ passwall2_aarch64_generic_$appversion.run "by github action" ./install.sh
+
+
+
       - name: Upload all .run files to GitHub Release
         uses: softprops/action-gh-release@v2.1.0
         with:
@@ -243,4 +243,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-   
+
